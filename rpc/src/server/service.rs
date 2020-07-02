@@ -19,7 +19,7 @@ use tezos_context::channel::ContextAction;
 use tezos_messages::protocol::{RpcJsonMap, UniversalValue};
 
 use crate::ContextList;
-use crate::helpers::{BlockHeaderInfo, FullBlockInfo, get_block_hash_by_block_id, get_context_protocol_params, PagedResult, get_action_types};
+use crate::helpers::{BlockHeaderInfo, FullBlockInfo, get_block_hash_by_block_id, get_context_protocol_params, PagedResult, get_action_types, Protocols};
 use crate::rpc_actor::RpcCollectedStateRef;
 use storage::context_action_storage::{contract_id_to_contract_address_for_index, ContextActionFilters, ContextActionJson};
 use slog::Logger;
@@ -384,6 +384,31 @@ pub(crate) fn get_stats_memory() -> MemoryStatsResult<MemoryData> {
 
 pub(crate) fn get_context(level: &str, list: ContextList) -> Result<Option<ContextMap>, failure::Error> {
     crate::helpers::get_context(level, list)
+}
+
+/// Extract the current_protocol and the next_protocol from the block metadata
+pub(crate) fn get_block_protocols(block_id: &str, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<Protocols, failure::Error> {
+    let block_storage = BlockStorage::new(persistent_storage);
+    
+    let block = match block_id.parse() {
+        Ok(val) => {
+            block_storage.get_by_block_level_with_json_data(val)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
+        }
+        Err(_e) => {
+            let block_hash = get_block_hash_by_block_id(block_id, persistent_storage, state)?;
+            block_storage.get_with_json_data(&block_hash)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
+        }
+    };
+
+    if let Some(block_info) = block {
+        Ok(Protocols::new(
+            block_info.metadata["protocol"].to_string().replace("\"", ""),
+            block_info.metadata["next_protocol"].to_string().replace("\"", ""),
+        ))
+    } else {
+        bail!("Cannot retrieve protocols, block_id {} not found!", block_id)
+    }
+    
 }
 
 #[inline]

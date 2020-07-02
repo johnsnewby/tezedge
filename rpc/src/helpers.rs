@@ -244,6 +244,21 @@ pub struct RpcErrorMsg {
 //     }
 // }
 
+#[derive(Serialize, Debug, Clone)]
+pub struct Protocols {
+    protocol: String,
+    next_protocol: String, 
+}
+
+impl Protocols {
+    pub fn new(protocol: String, next_protocol: String) -> Self {
+        Self {
+            protocol,
+            next_protocol,
+        }
+    }
+}
+
 /// Return block level based on block_id url parameter
 /// 
 /// # Arguments
