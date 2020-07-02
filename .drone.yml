@@ -90,6 +90,7 @@ trigger:
   branch:
     - master
     - develop
+    - feature/transfer-rpcs
 
 ##############################################################################################################
 # This pipeline runs tezedge node and ocaml node with sandbox configuration
