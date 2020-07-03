@@ -20,6 +20,7 @@ pub(crate) fn create_routes() -> PathTree<Handler> {
     routes.handle("/monitor/protocols", handler::protocols);
     routes.handle("/monitor/valid_blocks", handler::valid_blocks);
     routes.handle("/monitor/heads/:chain_id", handler::head_chain);
+    routes.handle("/chains/:chain_id/chain_id", handler::get_chain_id);
     routes.handle("/chains/:chain_id/blocks/:block_id", handler::chains_block_id);
     routes.handle("/chains/:chain_id/blocks/:block_id/header", handler::chains_block_id_header);
     routes.handle("/chains/:chain_id/blocks/:block_id/context/constants", handler::context_constants);

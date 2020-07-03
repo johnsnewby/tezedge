@@ -433,6 +433,14 @@ pub(crate) fn get_block_hash(block_id: &str, persistent_storage: &PersistentStor
     
 }
 
+/// Returns the chain id for the requested chain
+pub(crate) fn get_chain_id(state: &RpcCollectedStateRef) -> Result<String, failure::Error> {
+    // Note: for now, we only support one chain
+    // TODO: rework to support multiple chains
+    let state = state.read().unwrap();
+    Ok(chain_id_to_b58_string(state.chain_id()))
+}
+
 #[inline]
 fn map_header_and_json_to_full_block_info(header: BlockHeaderWithHash, json_data: BlockJsonData, state: &RpcCollectedStateRef) -> FullBlockInfo {
     let state = state.read().unwrap();

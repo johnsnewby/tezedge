@@ -235,6 +235,16 @@ pub async fn get_block_hash(_: Request<Body>, params: Params, _: Query, env: Rpc
     )
 }
 
+pub async fn get_chain_id(_: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
+    // this chain_id (e.g. main) reporesents the "alias" for the actial base58 encoded id (e.g. NetXdQprcVkpaWU)
+    let _chain_id = params.get_str("chain_id").unwrap();
+    
+    result_to_json_response(
+        service::get_chain_id(env.state()),
+        env.log(),
+    )
+}
+
 pub async fn get_contract_counter(_: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
     let _chain_id = params.get_str("chain_id").unwrap();
     let block_id = params.get_str("block_id").unwrap();
