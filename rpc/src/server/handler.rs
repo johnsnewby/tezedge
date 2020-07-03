@@ -111,6 +111,21 @@ pub async fn chains_block_id_header(_: Request<Body>, params: Params, _: Query, 
     }
 }
 
+pub async fn chains_block_id_header_shell(_: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
+    let chain_id = params.get_str("chain_id").unwrap();
+    let block_id = params.get_str("block_id").unwrap();
+
+    if chain_id == "main" {
+        if block_id == "head" {
+            result_option_to_json_response(service::get_current_head_shell_header(env.state()).map(|res| res), env.log())
+        } else {
+            result_option_to_json_response(service::get_block_shell_header(block_id, env.persistent_storage(), env.state()).map(|res| res), env.log())
+        }
+    } else {
+        empty()
+    }
+}
+
 pub async fn context_constants(_: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
     let block_id = params.get_str("block_id").unwrap();
 
