@@ -411,6 +411,28 @@ pub(crate) fn get_block_protocols(block_id: &str, persistent_storage: &Persisten
     
 }
 
+/// Extract the hash from the block data
+pub(crate) fn get_block_hash(block_id: &str, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<String, failure::Error> {
+    let block_storage = BlockStorage::new(persistent_storage);
+    
+    let block = match block_id.parse() {
+        Ok(val) => {
+            block_storage.get_by_block_level_with_json_data(val)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
+        }
+        Err(_e) => {
+            let block_hash = get_block_hash_by_block_id(block_id, persistent_storage, state)?;
+            block_storage.get_with_json_data(&block_hash)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
+        }
+    };
+
+    if let Some(block_info) = block {
+        Ok(block_info.hash)
+    } else {
+        bail!("Cannot retrieve protocols, block_id {} not found!", block_id)
+    }
+    
+}
+
 #[inline]
 fn map_header_and_json_to_full_block_info(header: BlockHeaderWithHash, json_data: BlockJsonData, state: &RpcCollectedStateRef) -> FullBlockInfo {
     let state = state.read().unwrap();

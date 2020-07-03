@@ -225,6 +225,16 @@ pub async fn get_block_protocols(_: Request<Body>, params: Params, _: Query, env
     )
 }
 
+pub async fn get_block_hash(_: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
+    let _chain_id = params.get_str("chain_id").unwrap();
+    let block_id = params.get_str("block_id").unwrap();
+    
+    result_to_json_response(
+        service::get_block_hash(block_id, env.persistent_storage(), env.state()),
+        env.log(),
+    )
+}
+
 pub async fn get_contract_counter(_: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
     let _chain_id = params.get_str("chain_id").unwrap();
     let block_id = params.get_str("block_id").unwrap();
