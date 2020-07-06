@@ -142,19 +142,7 @@ pub(crate) fn get_current_head_shell_header(state: &RpcCollectedStateRef) -> Res
 
 /// Get information about block
 pub(crate) fn get_full_block(block_id: &str, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<Option<FullBlockInfo>, failure::Error> {
-    let block_storage = BlockStorage::new(persistent_storage);
-    let block;
-    // hotfix
-    // TODO: rework block_id to accept types String and integer for block levels
-    match block_id.parse() {
-        Ok(val) => {
-            block = block_storage.get_by_block_level_with_json_data(val)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state));
-        }
-        Err(_e) => {
-            let block_hash = get_block_hash_by_block_id(block_id, persistent_storage, state)?;
-            block = block_storage.get_with_json_data(&block_hash)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state));
-        }
-    }
+    let block = get_block_by_block_id(block_id, persistent_storage, state)?;
     Ok(block)
 }
 
@@ -410,17 +398,7 @@ pub(crate) fn get_context(level: &str, list: ContextList) -> Result<Option<Conte
 
 /// Extract the current_protocol and the next_protocol from the block metadata
 pub(crate) fn get_block_protocols(block_id: &str, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<Protocols, failure::Error> {
-    let block_storage = BlockStorage::new(persistent_storage);
-    
-    let block = match block_id.parse() {
-        Ok(val) => {
-            block_storage.get_by_block_level_with_json_data(val)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
-        }
-        Err(_e) => {
-            let block_hash = get_block_hash_by_block_id(block_id, persistent_storage, state)?;
-            block_storage.get_with_json_data(&block_hash)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
-        }
-    };
+    let block = get_block_by_block_id(block_id, persistent_storage, state)?;
 
     if let Some(block_info) = block {
         Ok(Protocols::new(
@@ -435,17 +413,7 @@ pub(crate) fn get_block_protocols(block_id: &str, persistent_storage: &Persisten
 
 /// Extract the hash from the block data
 pub(crate) fn get_block_hash(block_id: &str, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<String, failure::Error> {
-    let block_storage = BlockStorage::new(persistent_storage);
-    
-    let block = match block_id.parse() {
-        Ok(val) => {
-            block_storage.get_by_block_level_with_json_data(val)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
-        }
-        Err(_e) => {
-            let block_hash = get_block_hash_by_block_id(block_id, persistent_storage, state)?;
-            block_storage.get_with_json_data(&block_hash)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
-        }
-    };
+    let block = get_block_by_block_id(block_id, persistent_storage, state)?;
 
     if let Some(block_info) = block {
         Ok(block_info.hash)
@@ -465,19 +433,7 @@ pub(crate) fn get_chain_id(state: &RpcCollectedStateRef) -> Result<String, failu
 
 /// Returns the chain id for the requested chain
 pub(crate) fn get_block_operation_hashes(block_id: &str, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<Vec<BlockOperations>, failure::Error> {
-    // let operations = Vec::with_capacity(4);
-
-    let block_storage = BlockStorage::new(persistent_storage);
-    
-    let block = match block_id.parse() {
-        Ok(val) => {
-            block_storage.get_by_block_level_with_json_data(val)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
-        }
-        Err(_e) => {
-            let block_hash = get_block_hash_by_block_id(block_id, persistent_storage, state)?;
-            block_storage.get_with_json_data(&block_hash)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
-        }
-    };
+    let block = get_block_by_block_id(block_id, persistent_storage, state)?;
 
     if let Some(block_info) = block {
         let operations = block_info.operations.into_iter()
@@ -487,7 +443,21 @@ pub(crate) fn get_block_operation_hashes(block_id: &str, persistent_storage: &Pe
             .collect();
         Ok(operations)
     } else {
-        bail!("Cannot retrieve protocols, block_id {} not found!", block_id)
+        bail!("Cannot retrieve operation hashes from block, block_id {} not found!", block_id)
+    }
+}
+
+pub(crate) fn get_block_by_block_id(block_id: &str, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<Option<FullBlockInfo>, failure::Error>{
+    let block_storage = BlockStorage::new(persistent_storage);
+    
+    match block_id.parse() {
+        Ok(val) => {
+            Ok(block_storage.get_by_block_level_with_json_data(val)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state)))
+        }
+        Err(_e) => {
+            let block_hash = get_block_hash_by_block_id(block_id, persistent_storage, state)?;
+            Ok(block_storage.get_with_json_data(&block_hash)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state)))
+        }
     }
 }
 
