@@ -270,6 +270,7 @@ pub async fn get_contract_counter(_: Request<Body>, params: Params, _: Query, en
         env.log(),
     )
 }
+
 pub async fn get_contract_manager_key(_: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
     let _chain_id = params.get_str("chain_id").unwrap();
     let block_id = params.get_str("block_id").unwrap();
@@ -280,4 +281,15 @@ pub async fn get_contract_manager_key(_: Request<Body>, params: Params, _: Query
         env.log(),
     )
 }
-//get_contract_manager_key
+//get_block_operations
+
+pub async fn get_block_operation_hashes(_: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
+    let _chain_id = params.get_str("chain_id").unwrap();
+    let block_id = params.get_str("block_id").unwrap();
+
+    
+    result_to_json_response(
+        service::get_block_operation_hashes(block_id, env.persistent_storage(), env.state()),
+        env.log(),
+    )
+}

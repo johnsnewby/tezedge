@@ -43,6 +43,8 @@ pub struct CycleJson {
     random_seed: Option<String>,
 }
 
+pub type BlockOperations = Vec<String>;
+
 /// Retrieve blocks from database.
 pub(crate) fn get_blocks(every_nth_level: Option<i32>, block_id: &str, limit: usize, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<Vec<FullBlockInfo>, failure::Error> {
     let block_storage = BlockStorage::new(persistent_storage);
@@ -448,7 +450,7 @@ pub(crate) fn get_block_hash(block_id: &str, persistent_storage: &PersistentStor
     if let Some(block_info) = block {
         Ok(block_info.hash)
     } else {
-        bail!("Cannot retrieve protocols, block_id {} not found!", block_id)
+        bail!("Cannot retrieve block hash, block_id {} not found!", block_id)
     }
     
 }
@@ -459,6 +461,34 @@ pub(crate) fn get_chain_id(state: &RpcCollectedStateRef) -> Result<String, failu
     // TODO: rework to support multiple chains
     let state = state.read().unwrap();
     Ok(chain_id_to_b58_string(state.chain_id()))
+}
+
+/// Returns the chain id for the requested chain
+pub(crate) fn get_block_operation_hashes(block_id: &str, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<Vec<BlockOperations>, failure::Error> {
+    // let operations = Vec::with_capacity(4);
+
+    let block_storage = BlockStorage::new(persistent_storage);
+    
+    let block = match block_id.parse() {
+        Ok(val) => {
+            block_storage.get_by_block_level_with_json_data(val)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
+        }
+        Err(_e) => {
+            let block_hash = get_block_hash_by_block_id(block_id, persistent_storage, state)?;
+            block_storage.get_with_json_data(&block_hash)?.map(|(header, json_data)| map_header_and_json_to_full_block_info(header, json_data, &state))
+        }
+    };
+
+    if let Some(block_info) = block {
+        let operations = block_info.operations.into_iter()
+            .map(|op_group| op_group.into_iter()
+                .map(|op| op["hash"].to_string().replace("\"", ""))
+                .collect())
+            .collect();
+        Ok(operations)
+    } else {
+        bail!("Cannot retrieve protocols, block_id {} not found!", block_id)
+    }
 }
 
 #[inline]
