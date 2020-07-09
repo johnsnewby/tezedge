@@ -310,8 +310,8 @@ pub async fn preapply_operations(req: Request<Body>, params: Params, _: Query, e
     let _chain_id = params.get_str("chain_id").unwrap();
     let block_id = params.get_str("block_id").unwrap();
     
-    let operation_data_raw = hyper::body::aggregate(req).await?;
-    let operation_data: String = serde_json::from_reader(&mut operation_data_raw.reader())?;
+    let operation_data_raw = hyper::body::to_bytes(req.into_body()).await?;
+    let operation_data = String::from_utf8(operation_data_raw.to_vec())?;
     
     result_to_json_response(
         service::preapply_operations(block_id, &operation_data, env.persistent_storage(), env.state()),
