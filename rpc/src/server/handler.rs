@@ -281,7 +281,6 @@ pub async fn get_contract_manager_key(_: Request<Body>, params: Params, _: Query
         env.log(),
     )
 }
-//get_block_operations
 
 pub async fn get_block_operation_hashes(_: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
     let _chain_id = params.get_str("chain_id").unwrap();
@@ -290,6 +289,32 @@ pub async fn get_block_operation_hashes(_: Request<Body>, params: Params, _: Que
     
     result_to_json_response(
         service::get_block_operation_hashes(block_id, env.persistent_storage(), env.state()),
+        env.log(),
+    )
+}
+
+pub async fn run_operation(req: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
+    let _chain_id = params.get_str("chain_id").unwrap();
+    let block_id = params.get_str("block_id").unwrap();
+    
+    let operation_data_raw = hyper::body::to_bytes(req.into_body()).await?;
+    let operation_data = String::from_utf8(operation_data_raw.to_vec())?;
+    
+    result_to_json_response(
+        service::run_operation(block_id, &operation_data, env.persistent_storage(), env.state()),
+        env.log(),
+    )
+}
+
+pub async fn preapply_operations(req: Request<Body>, params: Params, _: Query, env: RpcServiceEnvironment) -> ServiceResult {
+    let _chain_id = params.get_str("chain_id").unwrap();
+    let block_id = params.get_str("block_id").unwrap();
+    
+    let operation_data_raw = hyper::body::aggregate(req).await?;
+    let operation_data: String = serde_json::from_reader(&mut operation_data_raw.reader())?;
+    
+    result_to_json_response(
+        service::preapply_operations(block_id, &operation_data, env.persistent_storage(), env.state()),
         env.log(),
     )
 }
