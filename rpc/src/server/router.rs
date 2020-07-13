@@ -14,6 +14,7 @@ pub(crate) fn create_routes() -> PathTree<Handler> {
 
     let mut routes = PathTree::<Handler>::new();
     // Tezos shell and protocol rpc
+    routes.handle("/version", handler::node_version);
     routes.handle("/monitor/bootstrapped", handler::bootstrapped);
     routes.handle("/monitor/commit_hash", handler::commit_hash);
     routes.handle("/monitor/active_chains", handler::active_chains);

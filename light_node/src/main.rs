@@ -201,7 +201,7 @@ fn block_on_actors(
         .expect("Failed to start websocket actor");
     let _ = Monitor::actor(&actor_system, network_channel.clone(), websocket_handler, shell_channel.clone(), &persistent_storage)
         .expect("Failed to create monitor actor");
-    let _ = RpcServer::actor(&actor_system, shell_channel.clone(), ([0, 0, 0, 0], env.rpc.listener_port).into(), &tokio_runtime.handle(), &persistent_storage, &init_storage_data)
+    let _ = RpcServer::actor(&actor_system, shell_channel.clone(), ([0, 0, 0, 0], env.rpc.listener_port).into(), &tokio_runtime.handle(), &persistent_storage, tezos_env, &init_storage_data)
         .expect("Failed to create RPC server");
 
     tokio_runtime.block_on(async move {

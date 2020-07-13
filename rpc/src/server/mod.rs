@@ -17,6 +17,8 @@ use crypto::hash::{BlockHash, HashType};
 use storage::persistent::PersistentStorage;
 use shell::shell_channel::ShellChannelRef;
 
+use tezos_api::environment::TezosEnvironmentConfiguration;
+
 use crate::empty;
 use crate::rpc_actor::{RpcCollectedStateRef, RpcServerRef};
 
@@ -42,12 +44,14 @@ pub struct RpcServiceEnvironment {
     #[get = "pub(crate)"]
     shell_channel: ShellChannelRef,
     #[get = "pub(crate)"]
+    tezos_environment: TezosEnvironmentConfiguration,
+    #[get = "pub(crate)"]
     log: Logger,
 }
 
 impl RpcServiceEnvironment {
-    pub fn new(sys: ActorSystem, actor: RpcServerRef, shell_channel: ShellChannelRef, persistent_storage: &PersistentStorage, genesis_hash: &BlockHash, state: RpcCollectedStateRef, log: &Logger) -> Self {
-        Self { sys, actor, shell_channel: shell_channel.clone(), persistent_storage: persistent_storage.clone(), genesis_hash: HashType::BlockHash.bytes_to_string(genesis_hash), state, log: log.clone() }
+    pub fn new(sys: ActorSystem, actor: RpcServerRef, shell_channel: ShellChannelRef, tezos_environment: &TezosEnvironmentConfiguration, persistent_storage: &PersistentStorage, genesis_hash: &BlockHash, state: RpcCollectedStateRef, log: &Logger) -> Self {
+        Self { sys, actor, shell_channel: shell_channel.clone(), tezos_environment: tezos_environment.clone(), persistent_storage: persistent_storage.clone(), genesis_hash: HashType::BlockHash.bytes_to_string(genesis_hash), state, log: log.clone() }
     }
 }
 

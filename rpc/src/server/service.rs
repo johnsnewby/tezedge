@@ -17,9 +17,10 @@ use storage::skip_list::Bucket;
 use storage::context::{TezedgeContext, ContextIndex, ContextApi};
 use tezos_context::channel::ContextAction;
 use tezos_messages::protocol::{RpcJsonMap, UniversalValue};
+use tezos_api::environment::TezosEnvironmentConfiguration;
 
 use crate::ContextList;
-use crate::helpers::{BlockHeaderInfo, BlockHeaderShellInfo, FullBlockInfo, get_block_hash_by_block_id, get_context_protocol_params, PagedResult, get_action_types, Protocols};
+use crate::helpers::{BlockHeaderInfo, BlockHeaderShellInfo, FullBlockInfo, NodeVersion, get_block_hash_by_block_id, get_context_protocol_params, PagedResult, get_action_types, Protocols};
 use crate::rpc_actor::RpcCollectedStateRef;
 use storage::context_action_storage::{contract_id_to_contract_address_for_index, ContextActionFilters, ContextActionJson};
 use slog::Logger;
@@ -471,6 +472,10 @@ pub(crate) fn preapply_operations(block_id: &str, operation_json: &str, persiste
     let ret = serde_json::from_str(&mock_result)?;
 
     Ok(ret)
+}
+
+pub(crate) fn get_node_version(tezos_env: &TezosEnvironmentConfiguration) -> Result<NodeVersion, failure::Error> {
+    Ok(NodeVersion::new(tezos_env))
 }
 
 pub(crate) fn get_block_by_block_id(block_id: &str, persistent_storage: &PersistentStorage, state: &RpcCollectedStateRef) -> Result<Option<FullBlockInfo>, failure::Error>{
