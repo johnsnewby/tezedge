@@ -3,6 +3,7 @@
 
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use getset::Getters;
 use riker::actors::*;
@@ -14,6 +15,7 @@ use shell::shell_channel::{BlockApplied, CurrentMempoolState, ShellChannelMsg, S
 use storage::persistent::PersistentStorage;
 use storage::StorageInitInfo;
 use tezos_api::environment::TezosEnvironmentConfiguration;
+use tezos_wrapper::service::{IpcCmdServer, ProtocolController, ProtocolServiceError};
 
 use crate::server::{RpcServiceEnvironment, spawn_server};
 
@@ -52,7 +54,8 @@ impl RpcServer {
         tokio_executor: &Handle,
         persistent_storage: &PersistentStorage,
         tezos_env: &TezosEnvironmentConfiguration,
-        init_storage_data: &StorageInitInfo) -> Result<RpcServerRef, CreateError> {
+        init_storage_data: &StorageInitInfo,
+        (ipc_server, endpoint_name): (IpcCmdServer, String)) -> Result<RpcServerRef, CreateError> {
 
         // TODO: refactor - call load_current_head in pre_start
         let shared_state = Arc::new(RwLock::new(RpcCollectedState {
@@ -71,7 +74,7 @@ impl RpcServer {
             let inner_log = sys.log();
 
             tokio_executor.spawn(async move {
-                if let Err(e) = spawn_server(&rpc_listen_address, env).await {
+                if let Err(e) = spawn_server(&rpc_listen_address, env, (ipc_server, endpoint_name)).await {
                     warn!(inner_log, "HTTP Server encountered failure"; "error" => format!("{}", e));
                 }
             });

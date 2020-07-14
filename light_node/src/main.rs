@@ -156,6 +156,33 @@ fn block_on_actors(
         }
         Err(e) => shutdown_and_exit!(error!(log, "Failed to spawn protocol runner process"; "name" => mempool_prevalidator_protocol_endpoint.name, "reason" => e), actor_system),
     };
+    
+    // tezos protocol runner endpoint for future rpc router
+    let mut rpc_router_protocol_endpoint = ProtocolRunnerEndpoint::<ExecutableProtocolRunner>::new(
+        "rpc_router_protocol_runner_endpoint",
+        ProtocolEndpointConfiguration::new(
+            TezosRuntimeConfiguration {
+                log_enabled: env.logging.ocaml_log_enabled,
+                no_of_ffi_calls_treshold_for_gc: env.no_of_ffi_calls_threshold_for_gc,
+                debug_mode: env.storage.store_context_actions,
+            },
+            tezos_env.clone(),
+            env.enable_testchain,
+            &env.storage.tezos_data_dir,
+            &env.protocol_runner,
+            env.logging.level,
+            false,
+        ),
+        log.clone(),
+    );
+    let (rpc_router_protocol_runner_endpoint_run_feature, rpc_router_protocol_commands, rpc_router_endpoint_name) = match rpc_router_protocol_endpoint.start_in_restarting_mode() {
+        Ok(run_feature) => {
+            let ProtocolRunnerEndpoint { commands, name, .. } = rpc_router_protocol_endpoint;
+            info!(log, "Protocol runner started successfully"; "endpoint" => name.clone());
+            (run_feature, commands, name)
+        }
+        Err(e) => shutdown_and_exit!(error!(log, "Failed to spawn protocol runner process"; "name" => rpc_router_protocol_endpoint.name, "reason" => e), actor_system),
+    };
 
     let mut tokio_runtime = create_tokio_runtime(env);
 
@@ -201,7 +228,7 @@ fn block_on_actors(
         .expect("Failed to start websocket actor");
     let _ = Monitor::actor(&actor_system, network_channel.clone(), websocket_handler, shell_channel.clone(), &persistent_storage)
         .expect("Failed to create monitor actor");
-    let _ = RpcServer::actor(&actor_system, shell_channel.clone(), ([0, 0, 0, 0], env.rpc.listener_port).into(), &tokio_runtime.handle(), &persistent_storage, tezos_env, &init_storage_data)
+    let _ = RpcServer::actor(&actor_system, shell_channel.clone(), ([0, 0, 0, 0], env.rpc.listener_port).into(), &tokio_runtime.handle(), &persistent_storage, tezos_env, &init_storage_data, (rpc_router_protocol_commands, rpc_router_endpoint_name))
         .expect("Failed to create RPC server");
 
     tokio_runtime.block_on(async move {
@@ -213,6 +240,7 @@ fn block_on_actors(
         // disable/stop protocol runner for applying blocks feature
         apply_blocks_protocol_runner_endpoint_run_feature.store(false, Ordering::Release);
         mempool_prevalidator_protocol_runner_endpoint_run_feature.store(false, Ordering::Release);
+        rpc_router_protocol_runner_endpoint_run_feature.store(false, Ordering::Release);
 
         info!(log, "Sending shutdown notification to actors");
         shell_channel.tell(

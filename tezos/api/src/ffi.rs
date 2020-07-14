@@ -507,7 +507,7 @@ impl From<ocaml::Error> for CallError {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Fail)]
+#[derive(Clone, Serialize, Deserialize, Debug, Fail)]
 pub enum TezosRuntimeConfigurationError {
     #[fail(display = "Change ocaml settings failed, message: {}!", message)]
     ChangeConfigurationError {
@@ -528,7 +528,7 @@ impl From<ocaml::Error> for TezosRuntimeConfigurationError {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Fail)]
+#[derive(Clone, Serialize, Deserialize, Debug, Fail)]
 pub enum TezosGenerateIdentityError {
     #[fail(display = "Generate identity failed, message: {}!", message)]
     GenerationError {
@@ -553,7 +553,7 @@ impl From<ocaml::Error> for TezosGenerateIdentityError {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Fail)]
+#[derive(Clone, Serialize, Deserialize, Debug, Fail)]
 pub enum TezosStorageInitError {
     #[fail(display = "Ocaml storage init failed, message: {}!", message)]
     InitializeError {
@@ -580,7 +580,7 @@ impl slog::Value for TezosStorageInitError {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Fail)]
+#[derive(Clone, Serialize, Deserialize, Debug, Fail)]
 pub enum GetDataError {
     #[fail(display = "Ocaml failed to get data, message: {}!", message)]
     ReadError {
@@ -601,7 +601,7 @@ impl From<ocaml::Error> for GetDataError {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Fail, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Fail, PartialEq)]
 pub enum ApplyBlockError {
     #[fail(display = "Incomplete operations, exptected: {}, has actual: {}!", expected, actual)]
     IncompleteOperations {
@@ -659,7 +659,7 @@ impl From<CallError> for ApplyBlockError {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Fail, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Fail, PartialEq)]
 pub enum BeginConstructionError {
     #[fail(display = "Failed to begin construction - message: {}!", message)]
     FailedToBeginConstruction {
@@ -705,7 +705,7 @@ impl From<CallError> for BeginConstructionError {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Fail, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Fail, PartialEq)]
 pub enum ValidateOperationError {
     #[fail(display = "Failed to validate operation - message: {}!", message)]
     FailedToValidateOperation {

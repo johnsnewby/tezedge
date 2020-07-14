@@ -2215,6 +2215,7 @@ dependencies = [
  "tezos_context",
  "tezos_encoding",
  "tezos_messages",
+ "tezos_wrapper",
  "tokio",
 ]
 

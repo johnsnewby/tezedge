@@ -7,6 +7,8 @@ use std::sync::Arc;
 use hyper::{Body, Request};
 use path_tree::PathTree;
 
+use tezos_wrapper::service::ProtocolController;
+
 use crate::server::{Handler, HResult, Params, Query, RpcServiceEnvironment};
 use crate::server::{dev_handler, handler};
 
@@ -60,12 +62,12 @@ trait Routes<Fut> {
 
 impl<T, F> Routes<T> for PathTree<Handler>
     where
-        T: Fn(Request<Body>, Params, Query, RpcServiceEnvironment) -> F + Send + Sync + 'static,
+        T: Fn(Request<Body>, Params, Query, RpcServiceEnvironment, ProtocolController) -> F + Send + Sync + 'static,
         F: Future<Output = HResult> + Send + 'static
 {
     fn handle(&mut self, path: &str, f: T) {
-        self.insert(path, Arc::new(move |req, params, query, env| {
-            Box::new(f(req, params, query, env))
+        self.insert(path, Arc::new(move |req, params, query, env, protocol_controller| {
+            Box::new(f(req, params, query, env, protocol_controller))
         }));
     }
 }
