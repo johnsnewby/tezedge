@@ -201,6 +201,18 @@ fn block_on_actors(
         .expect("Failed to start websocket actor");
     let _ = Monitor::actor(&actor_system, network_channel.clone(), websocket_handler, shell_channel.clone(), &persistent_storage)
         .expect("Failed to create monitor actor");
+
+    // TODO: TE-192 - temporary initialize readonly context for rpc (this will be refactor ASAP)
+    thread::sleep(Duration::from_secs(10));
+    let _ = tezos_client::client::init_protocol_context(
+        env.storage.tezos_data_dir.to_str().unwrap().to_string(),
+        tezos_env.genesis.clone(),
+        tezos_env.protocol_overrides.clone(),
+        false,
+        tezos_env.enable_testchain,
+        true,
+        None,
+    ).expect("Failed to initialize readonly ocaml runtime");
     let _ = RpcServer::actor(&actor_system, shell_channel.clone(), ([0, 0, 0, 0], env.rpc.listener_port).into(), &tokio_runtime.handle(), &persistent_storage, tezos_env, &init_storage_data)
         .expect("Failed to create RPC server");
 
