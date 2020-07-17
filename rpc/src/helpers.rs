@@ -3,12 +3,18 @@
 
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::pin::Pin;
+use std::thread;
+use std::time::{Duration, Instant};
 
 use failure::{bail, Fail};
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
+use futures::{Stream};
+use futures::task::{Poll, Context};
+use tokio::time::{delay_for, Delay};
 
-use crypto::hash::{BlockHash, HashType, ProtocolHash};
+use crypto::hash::{BlockHash, HashType, ProtocolHash, chain_id_to_b58_string};
 use shell::shell_channel::BlockApplied;
 use storage::{BlockMetaStorage, BlockStorage, BlockStorageReader};
 use storage::persistent::{PersistentStorage, ContextMap};
@@ -118,6 +124,41 @@ pub struct BlockHeaderMonitorInfo {
     pub fitness: Vec<String>,
     pub context: String,
     pub protocol_data: String,
+}
+
+pub struct MonitorHeadStream {
+    pub state: RpcCollectedStateRef,
+    pub delay: Option<Delay>,
+}
+
+impl Stream for MonitorHeadStream {
+    type Item = Result<String, serde_json::Error>;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Result<String, serde_json::Error>>> {
+
+        let delay = self.delay.get_or_insert_with(|| {
+            delay_for(Duration::from_secs(5))
+        });
+
+        if delay.is_elapsed() {
+            self.delay = None;
+            let state = self.state.read().unwrap();
+            let current_head = state.current_head().as_ref().map(|current_head| {
+                let chain_id = chain_id_to_b58_string(state.chain_id());
+                BlockHeaderInfo::new(current_head, &chain_id).to_monitor_header(current_head)
+            });
+
+            let mut head_string = serde_json::to_string(&current_head.unwrap())?;
+            println!("Head: {:?}", head_string);
+
+            head_string.push('\n');
+
+            Poll::Ready(Some(Ok(head_string)))
+        } else {
+            cx.waker().wake_by_ref();
+            Poll::Pending
+        }
+    }
 }
 
 impl FullBlockInfo {

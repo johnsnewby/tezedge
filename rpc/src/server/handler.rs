@@ -3,8 +3,10 @@
 
 use bytes::buf::BufExt;
 use chrono::prelude::*;
-use hyper::{Body, Request};
+use hyper::{Body, Request, Response};
 use slog::warn;
+use bytes::buf::BufExt;
+use futures::Stream;
 
 use crypto::hash::HashType;
 use shell::shell_channel::BlockApplied;
@@ -70,7 +72,14 @@ pub async fn head_chain(_: Request<Body>, params: Params, _: Query, env: RpcServ
 
     if chain_id == "main" {
         // NOTE: just header?
-        result_option_to_json_response(service::get_current_head_monitor_header(env.state()).map(|res| res), env.log())
+        // result_option_to_json_response(service::get_current_head_monitor_header(env.state()).map(|res| res), env.log())
+        // TODO: WIP - refactor this
+        Ok(Response::builder()
+            .header(hyper::header::CONTENT_TYPE, "application/json")
+            // TODO: add to config
+            .header(hyper::header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+            .header(hyper::header::TRANSFER_ENCODING, "chunked")
+            .body(Body::wrap_stream(service::get_current_head_monitor_header(env.state())?.unwrap()))?)
     } else {
         // TODO: implement... 
         empty()
