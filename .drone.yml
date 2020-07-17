@@ -275,7 +275,7 @@ trigger:
   branch:
     - master
     - develop
-    - feature/transfer-rpcs
+    - feature/streaming-rpcs
 
 depends_on:
   - build-and-tests
