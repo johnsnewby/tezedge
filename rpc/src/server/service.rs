@@ -23,7 +23,7 @@ use tezos_context::channel::ContextAction;
 use tezos_messages::protocol::{RpcJsonMap, UniversalValue};
 
 use crate::ContextList;
-use crate::helpers::{BlockHeaderInfo, BlockHeaderMonitorInfo, MonitorHeadStream, BlockHeaderShellInfo, FullBlockInfo, NodeVersion, get_block_hash_by_block_id, get_context_protocol_params, PagedResult, get_action_types, Protocols};
+use crate::helpers::{BlockHeaderInfo, MonitorHeadStream, BlockHeaderShellInfo, FullBlockInfo, NodeVersion, get_block_hash_by_block_id, get_context_protocol_params, PagedResult, get_action_types, Protocols};
 use crate::rpc_actor::RpcCollectedStateRef;
 
 // Serialize, Deserialize,

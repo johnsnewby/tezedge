@@ -4,8 +4,7 @@
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::pin::Pin;
-use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use failure::{bail, Fail};
 use serde::{Serialize, Deserialize};

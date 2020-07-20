@@ -5,8 +5,6 @@ use bytes::buf::BufExt;
 use chrono::prelude::*;
 use hyper::{Body, Request, Response};
 use slog::warn;
-use bytes::buf::BufExt;
-use futures::Stream;
 
 use crypto::hash::HashType;
 use shell::shell_channel::BlockApplied;
